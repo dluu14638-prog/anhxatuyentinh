@@ -1,0 +1,328 @@
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz Ánh Xạ Tuyến Tính DUYMT</title>
+
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<style>
+body{
+    font-family: Arial, sans-serif;
+    background:#eef3f8;
+    margin:0;
+    padding:20px;
+}
+
+.container{
+    max-width:1100px;
+    margin:auto;
+    background:white;
+    padding:30px;
+    border-radius:16px;
+    box-shadow:0 0 15px rgba(0,0,0,0.1);
+}
+
+h1,h2{
+    text-align:center;
+    color:#1565c0;
+}
+
+.toolbar{
+    display:flex;
+    justify-content:center;
+    gap:15px;
+    flex-wrap:wrap;
+    margin-bottom:25px;
+}
+
+.btn{
+    background:#1565c0;
+    color:white;
+    border:none;
+    padding:12px 20px;
+    border-radius:10px;
+    cursor:pointer;
+    font-size:16px;
+}
+
+.btn:hover{
+    background:#0d47a1;
+}
+
+.score{
+    position:sticky;
+    top:10px;
+    background:#1565c0;
+    color:white;
+    padding:15px;
+    border-radius:10px;
+    margin-bottom:20px;
+    font-size:20px;
+    z-index:100;
+}
+
+.question{
+    background:#fafafa;
+    border:1px solid #ddd;
+    border-radius:12px;
+    padding:20px;
+    margin-bottom:25px;
+}
+
+.option{
+    display:block;
+    width:100%;
+    padding:12px;
+    margin-top:10px;
+    border-radius:10px;
+    border:1px solid #999;
+    cursor:pointer;
+    text-align:left;
+    transition:0.2s;
+}
+
+.option:hover{
+    background:#f1f1f1;
+}
+
+.correct{
+    background:#b9f6ca !important;
+}
+
+.wrong{
+    background:#ffcdd2 !important;
+}
+
+.explanation{
+    display:none;
+    margin-top:15px;
+    background:#e3f2fd;
+    padding:15px;
+    border-left:5px solid #1565c0;
+    border-radius:10px;
+    line-height:1.7;
+}
+
+.tip{
+    margin-top:10px;
+    background:#fff3cd;
+    padding:10px;
+    border-radius:8px;
+}
+
+.footer{
+    text-align:center;
+    margin-top:40px;
+    color:#666;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>ĐỀ THI TRẮC NGHIỆM TƯƠNG TÁC</h1>
+<h2>Ánh xạ tuyến tính · Ảnh · Hạt nhân — DUYMT Edition</h2>
+
+<div class="toolbar">
+    <button class="btn" onclick="downloadHTML()">⬇ Tải file HTML</button>
+    <button class="btn" onclick="location.reload()">🔄 Làm lại đề</button>
+</div>
+
+<div class="score">
+Điểm hiện tại: <span id="score">0</span>/25
+</div>
+
+<div id="quiz"></div>
+
+<div class="footer">
+Github-ready HTML • MathJax • Interactive Quiz
+</div>
+
+</div>
+
+<script>
+
+const questions = [
+
+{
+q:"Ánh xạ tuyến tính phải thỏa điều kiện nào?",
+opts:["Bảo toàn cộng và nhân vô hướng","Chỉ bảo toàn cộng","Chỉ bảo toàn nhân","Không cần điều kiện"],
+ans:0,
+exp:"Theo định nghĩa: T(c₁u+c₂v)=c₁T(u)+c₂T(v).",
+tip:"Nhớ 2 ý: cộng và nhân vô hướng."
+},
+
+{
+q:"Ker(T) là gì?",
+opts:["Không gian cột","Tập vector bị ánh xạ về 0","Ảnh của T","Không gian hàng"],
+ans:1,
+exp:"Ker(T)= {x∈V | T(x)=0}.",
+tip:"Kernel là nơi bị triệt tiêu."
+},
+
+{
+q:"Im(T) được tính bằng gì?",
+opts:["Không gian hàng","Không gian nghiệm","Không gian cột","Định thức"],
+ans:2,
+exp:"Ảnh Im(T) là column space của ma trận.",
+tip:"Ảnh = các cột sinh ra."
+},
+
+{
+q:"Định lý Rank-Nullity phát biểu thế nào?",
+opts:["rank+det=n","rank-nullity=n","dim(V)=rank+nullity","rank=det"],
+ans:2,
+exp:"Định lý hạng-hạt nhân: dim(V)=rank(T)+nullity(T).",
+tip:"Tổng chiều được bảo toàn."
+},
+
+{
+q:"T là đơn ánh khi nào?",
+opts:["Im(T)=W","Ker(T)={0}","rank=0","det=0"],
+ans:1,
+exp:"T đơn ánh ⇔ Ker(T)={0}.",
+tip:"Không mất thông tin ⇒ kernel bằng 0."
+}
+
+];
+
+const patterns = [
+
+{
+q:"Cho A=[[1,2],[2,4]]. rank(A) bằng?",
+opts:["0","1","2","4"],
+ans:1,
+exp:"Hàng 2 = 2×hàng 1 nên chỉ có 1 hàng độc lập tuyến tính.",
+tip:"Hàng tỉ lệ ⇒ giảm rank."
+},
+
+{
+q:"Nếu det(A)≠0 thì?",
+opts:["A không khả nghịch","rank<n","A khả nghịch","Ker(A)≠{0}"],
+ans:2,
+exp:"det(A)≠0 ⇔ A khả nghịch ⇔ rank=n.",
+tip:"7 mệnh đề tương đương DUYMT."
+},
+
+{
+q:"Cho T:R³→R². rank(T) lớn nhất bằng?",
+opts:["1","2","3","5"],
+ans:1,
+exp:"rank(T)≤min(3,2)=2.",
+tip:"Rank không vượt quá chiều nhỏ hơn."
+},
+
+{
+q:"Nếu nullity(T)=0 thì?",
+opts:["Toàn ánh","Đơn ánh","Song ánh","Không xác định"],
+ans:1,
+exp:"nullity(T)=0 ⇔ Ker(T)={0}.",
+tip:"Nullity 0 ⇒ injective."
+},
+
+{
+q:"Cho T:R²→R³. T có thể toàn ánh không?",
+opts:["Có","Không","Chỉ khi rank=3","Chỉ khi det≠0"],
+ans:1,
+exp:"Không thể vì dim nguồn < dim đích.",
+tip:"Nguồn nhỏ hơn đích ⇒ không phủ kín."
+}
+
+];
+
+while(questions.length < 25){
+    questions.push(patterns[(questions.length-5)%patterns.length]);
+}
+
+const quiz = document.getElementById("quiz");
+
+let score = 0;
+let answered = Array(25).fill(false);
+
+questions.forEach((item,index)=>{
+
+    const div = document.createElement("div");
+    div.className = "question";
+
+    const section = index < 5 ? "LÝ THUYẾT" : "BÀI TẬP";
+
+    div.innerHTML = `
+        <h3>Câu ${index+1} — ${section}</h3>
+        <p>${item.q}</p>
+    `;
+
+    item.opts.forEach((opt,i)=>{
+
+        const btn = document.createElement("button");
+        btn.className = "option";
+        btn.innerHTML = opt;
+
+        btn.onclick = ()=>{
+
+            if(answered[index]) return;
+
+            answered[index] = true;
+
+            const buttons = div.querySelectorAll(".option");
+
+            buttons[item.ans].classList.add("correct");
+
+            if(i !== item.ans){
+                btn.classList.add("wrong");
+            }else{
+                score++;
+                document.getElementById("score").innerText = score;
+            }
+
+            const exp = document.createElement("div");
+            exp.className = "explanation";
+            exp.style.display = "block";
+
+            exp.innerHTML = `
+                <b>Đáp án đúng:</b> ${item.opts[item.ans]}<br><br>
+                <b>Giải thích chi tiết:</b><br>
+                ${item.exp}
+
+                <div class="tip">
+                    <b>Mẹo nhanh:</b><br>
+                    ${item.tip}
+                </div>
+            `;
+
+            div.appendChild(exp);
+
+            MathJax.typesetPromise();
+        };
+
+        div.appendChild(btn);
+
+    });
+
+    quiz.appendChild(div);
+
+});
+
+function downloadHTML(){
+
+    const htmlContent = document.documentElement.outerHTML;
+
+    const blob = new Blob([htmlContent], {type:'text/html'});
+
+    const a = document.createElement('a');
+
+    a.href = URL.createObjectURL(blob);
+
+    a.download = 'quiz_anh_xa_tuyen_tinh_DUYMT.html';
+
+    a.click();
+}
+
+</script>
+
+</body>
+</html>
